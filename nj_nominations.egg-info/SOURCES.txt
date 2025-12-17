@@ -1,0 +1,9 @@
+setup.py
+nj_nomination/__init__.py
+nj_nomination/client.py
+nj_nomination/processor.py
+nj_nominations.egg-info/PKG-INFO
+nj_nominations.egg-info/SOURCES.txt
+nj_nominations.egg-info/dependency_links.txt
+nj_nominations.egg-info/requires.txt
+nj_nominations.egg-info/top_level.txt
