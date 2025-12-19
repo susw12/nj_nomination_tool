@@ -149,7 +149,7 @@ class NominationProcessor:
             
         return "Appointment"
 
-    def process(self, target_year=2025):
+    def process(self, target_year=2025, first_action_only=True, most_recent_only=False):
         if not isinstance(self.raw_data, list) or len(self.raw_data) < 2:
             print("Error: Data format incorrect. Expected list of two lists.")
             return pd.DataFrame()
@@ -191,26 +191,45 @@ class NominationProcessor:
 
             person_actions.sort(key=lambda x: x['date'], reverse=True)
             most_recent = person_actions[0]
+            first_action = person_actions[-1]
             
-            if most_recent['date'].year != target_year:
+            if most_recent_only and most_recent['date'].year != target_year:
                 continue
+
+            if first_action_only and first_action['date'].year != target_year:
+                continue
+
 
             full_name = f"{first} {profile.get('MiddleName', '')} {last} {profile.get('Suffix') or ''}".replace("  ", " ").strip()
             
             city = profile.get('Resides_At', 'N/A')
             county = self.geo_lookup.get_county(city)
 
-            row = {
-                'Board/Commission': self._clean_board_name(profile.get('Position', '')),
-                'Name': full_name,
-                'Last Action Date': most_recent['date'].strftime('%m/%d/%Y'),
-                'Last Action': most_recent['action'],
-                'Replacing': self._clean_replacing_field(profile.get('Term', ''), full_name),
-                'County': county,
-                'Address': city,
-                'LD of Residence': "N/A"
-            }
-            extracted_data.append(row)
+            if (len(person_actions) > 1 and person_actions[0]['date'] == person_actions[1]['date']):
+                row = {
+                    'Board/Commission': self._clean_board_name(profile.get('Position', '')),
+                    'Name': full_name,
+                    'Last Action Date': most_recent['date'].strftime('%m/%d/%Y'),
+                    'Last Action': str(most_recent['action']) + " / " + str(person_actions[1]['action']),
+                    'Replacing': self._clean_replacing_field(profile.get('Term', ''), full_name),
+                    'County': county,
+                    'Address': city,
+                    'LD of Residence': "N/A"
+                }
+                extracted_data.append(row)
+            else: 
+                row = {
+                    'Board/Commission': self._clean_board_name(profile.get('Position', '')),
+                    'Name': full_name,
+                    'Last Action Date': most_recent['date'].strftime('%m/%d/%Y'),
+                    'Last Action': most_recent['action'],
+                    'Replacing': self._clean_replacing_field(profile.get('Term', ''), full_name),
+                    'County': county,
+                    'Address': city,
+                    'LD of Residence': "N/A"
+                }
+                extracted_data.append(row)
+
 
         df = pd.DataFrame(extracted_data)
         if not df.empty:
