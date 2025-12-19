@@ -205,12 +205,12 @@ class NominationProcessor:
             city = profile.get('Resides_At', 'N/A')
             county = self.geo_lookup.get_county(city)
 
-            if (len(person_actions) > 1 and person_actions[0]['date'] == person_actions[1]['date']):
+            if sum(1 for action in person_actions if action['date'] == most_recent['date']) > 1:
                 row = {
                     'Board/Commission': self._clean_board_name(profile.get('Position', '')),
                     'Name': full_name,
                     'Last Action Date': most_recent['date'].strftime('%m/%d/%Y'),
-                    'Last Action': str(most_recent['action']) + " / " + str(person_actions[1]['action']),
+                    'Last Action': "FLAG (multiple entries same date): " + str(most_recent['action']),
                     'Replacing': self._clean_replacing_field(profile.get('Term', ''), full_name),
                     'County': county,
                     'Address': city,
